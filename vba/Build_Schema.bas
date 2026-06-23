@@ -60,6 +60,51 @@ End Sub
 
 
 ' -----------------------------------------------------------------------------
+' RESET: drops all tables so RunAllScripts can be re-run on the same database.
+' Call this if you get "Table already exists" errors.
+' WARNING: this permanently deletes all data. Use only on a dev/test database.
+' -----------------------------------------------------------------------------
+Public Sub ResetDatabase()
+
+    Dim answer As VbMsgBoxResult
+    answer = MsgBox("This will DELETE all tables and data permanently." & vbCrLf & _
+                    "Are you sure you want to reset the database?", _
+                    vbYesNo + vbCritical, "Confirm Reset")
+    If answer <> vbYes Then
+        Debug.Print "Reset cancelled."
+        Exit Sub
+    End If
+
+    Debug.Print "=== Reset Started: " & Now() & " ==="
+
+    ' Step 1: Remove deferred/circular constraints so tables can be dropped cleanly.
+    RunSQLSafe "ALTER TABLE BacklogItems DROP CONSTRAINT FK_BacklogItems_CreatedFromDetail;", _
+               "Drop FK_BacklogItems_CreatedFromDetail"
+    RunSQLSafe "ALTER TABLE Employees DROP CONSTRAINT FK_Employees_Supervisor;", _
+               "Drop FK_Employees_Supervisor"
+
+    ' Step 2: Drop tables in reverse-dependency order.
+    RunSQLSafe "DROP TABLE SupervisorReviews;",      "Drop SupervisorReviews"
+    RunSQLSafe "DROP TABLE ProductivityLogDetails;", "Drop ProductivityLogDetails"
+    RunSQLSafe "DROP TABLE BacklogItems;",           "Drop BacklogItems"
+    RunSQLSafe "DROP TABLE ProductivityLogs;",       "Drop ProductivityLogs"
+    RunSQLSafe "DROP TABLE ReportingMonths;",        "Drop ReportingMonths"
+    RunSQLSafe "DROP TABLE Employees;",              "Drop Employees"
+    RunSQLSafe "DROP TABLE BacklogStatuses;",        "Drop BacklogStatuses"
+    RunSQLSafe "DROP TABLE ReviewStatuses;",         "Drop ReviewStatuses"
+    RunSQLSafe "DROP TABLE CertifiedMailStatuses;",  "Drop CertifiedMailStatuses"
+    RunSQLSafe "DROP TABLE CertifiedMailTypes;",     "Drop CertifiedMailTypes"
+    RunSQLSafe "DROP TABLE TaskTypes;",              "Drop TaskTypes"
+    RunSQLSafe "DROP TABLE Units;",                  "Drop Units"
+
+    Debug.Print "=== Reset Complete. Run RunAllScripts to rebuild. ==="
+    MsgBox "All tables dropped. Run RunAllScripts to rebuild the database.", _
+           vbInformation, "Reset Complete"
+
+End Sub
+
+
+' -----------------------------------------------------------------------------
 ' Helper: executes a single DDL or DML statement; prints result to Immediate.
 ' -----------------------------------------------------------------------------
 Private Sub RunSQL(sql As String, description As String)
@@ -73,6 +118,23 @@ Err_Handler:
     Debug.Print "  SQL: " & sql
     ' Re-raise so RunAllScripts stops -- remove this line to continue on errors.
     Err.Raise Err.Number, Err.Source, Err.Description
+End Sub
+
+
+' -----------------------------------------------------------------------------
+' Helper: like RunSQL but swallows errors -- used by ResetDatabase so missing
+' tables or constraints don't abort the drop sequence.
+' -----------------------------------------------------------------------------
+Private Sub RunSQLSafe(sql As String, description As String)
+    On Error Resume Next
+    CurrentDb.Execute sql, dbFailOnError
+    If Err.Number <> 0 Then
+        Debug.Print "  SKIP (not found): " & description
+        Err.Clear
+    Else
+        Debug.Print "  OK: " & description
+    End If
+    On Error GoTo 0
 End Sub
 
 
