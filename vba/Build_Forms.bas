@@ -26,14 +26,14 @@ Option Compare Database
 Option Explicit
 
 ' Layout constants (twips -- 1440 twips = 1 inch)
-Private Const FORM_W    As Long = 9360    ' Form width
-Private Const COL1_L    As Long = 360     ' Label left
-Private Const COL1_W    As Long = 2000    ' Label width
-Private Const COL2_L    As Long = 2520    ' Control left
-Private Const COL2_W    As Long = 5400    ' Control width
-Private Const ROW_H     As Long = 360     ' Row height
-Private Const ROW_GAP   As Long = 120     ' Gap between rows
-Private Const ROW_START As Long = 360     ' First row top
+Private Const FORM_W    As Long = 9360
+Private Const COL1_L    As Long = 360
+Private Const COL1_W    As Long = 2000
+Private Const COL2_L    As Long = 2520
+Private Const COL2_W    As Long = 5400
+Private Const ROW_H     As Long = 360
+Private Const ROW_GAP   As Long = 120
+Private Const ROW_START As Long = 360
 
 ' =============================================================================
 ' ENTRY POINT
@@ -43,7 +43,6 @@ Public Sub CreateAllForms()
 
     Debug.Print "=== Building Forms: " & Now() & " ==="
 
-    ' Remove any previous versions so the build is clean
     DeleteFormIfExists "frm_Admin"
     DeleteFormIfExists "frm_Employees"
     DeleteFormIfExists "frm_Units"
@@ -53,18 +52,13 @@ Public Sub CreateAllForms()
     DeleteFormIfExists "frm_ReviewStatuses"
     DeleteFormIfExists "frm_BacklogStatuses"
 
-    ' Build lookup datasheet forms
     Build_frm_Units
     Build_frm_TaskTypes
     Build_frm_CertMailTypes
     Build_frm_CertMailStatuses
     Build_frm_ReviewStatuses
     Build_frm_BacklogStatuses
-
-    ' Build the Employees entry form
     Build_frm_Employees
-
-    ' Build the Admin switchboard last (it references the forms above)
     Build_frm_Admin
 
     Debug.Print "=== Forms Complete: " & Now() & " ==="
@@ -86,26 +80,24 @@ Private Sub DeleteFormIfExists(formName As String)
 End Sub
 
 ' =============================================================================
-' HELPER: add a label + text box pair to an open form (design view)
-' Returns the text box control so the caller can adjust properties.
+' HELPER: add a label + text box pair to an open form (design view).
+' Returns the text box so the caller can set extra properties.
 ' =============================================================================
 
 Private Function AddLabeledTextBox(formName As String, _
                                    fieldName As String, _
                                    labelCaption As String, _
                                    rowIndex As Integer) As Control
-    Dim lbl As Control
-    Dim txt As Control
-    Dim topPos As Long
+    Dim lbl     As Control
+    Dim txt     As Control
+    Dim topPos  As Long
 
     topPos = ROW_START + rowIndex * (ROW_H + ROW_GAP)
 
-    ' Label
     Set lbl = CreateControl(formName, acLabel, acDetail, "", "", _
                             COL1_L, topPos, COL1_W, ROW_H)
     lbl.Caption = labelCaption
 
-    ' Bound text box
     Set txt = CreateControl(formName, acTextBox, acDetail, "", fieldName, _
                             COL2_L, topPos, COL2_W, ROW_H)
     txt.Name = "txt_" & fieldName
@@ -121,9 +113,9 @@ Private Sub AddLabeledCheckBox(formName As String, _
                                fieldName As String, _
                                labelCaption As String, _
                                rowIndex As Integer)
-    Dim lbl As Control
-    Dim chk As Control
-    Dim topPos As Long
+    Dim lbl     As Control
+    Dim chk     As Control
+    Dim topPos  As Long
 
     topPos = ROW_START + rowIndex * (ROW_H + ROW_GAP)
 
@@ -137,16 +129,17 @@ Private Sub AddLabeledCheckBox(formName As String, _
 End Sub
 
 ' =============================================================================
-' HELPER: add a label + combo box pair
+' HELPER: add a label + combo box pair.
+' Returns the combo so the caller can set RowSource etc.
 ' =============================================================================
 
 Private Function AddLabeledCombo(formName As String, _
                                  fieldName As String, _
                                  labelCaption As String, _
                                  rowIndex As Integer) As Control
-    Dim lbl As Control
-    Dim cbo As Control
-    Dim topPos As Long
+    Dim lbl     As Control
+    Dim cbo     As Control
+    Dim topPos  As Long
 
     topPos = ROW_START + rowIndex * (ROW_H + ROW_GAP)
 
@@ -162,17 +155,18 @@ Private Function AddLabeledCombo(formName As String, _
 End Function
 
 ' =============================================================================
-' LOOKUP FORMS (Datasheet view -- one per lookup table)
+' LOOKUP FORMS (Datasheet view)
 ' =============================================================================
 
 Private Sub Build_frm_Units()
     Dim frm As Form
     Dim txt As Control
+    Dim chk As Control
 
     Set frm = CreateForm()
     With frm
         .RecordSource      = "Units"
-        .DefaultView       = 3        ' Datasheet
+        .DefaultView       = 3
         .Caption           = "Units"
         .AllowAdditions    = True
         .AllowEdits        = True
@@ -181,14 +175,12 @@ Private Sub Build_frm_Units()
         .Width             = FORM_W
     End With
 
-    ' Bound controls (position is irrelevant in datasheet view)
     Set txt = CreateControl(frm.Name, acTextBox, acDetail, "", "UnitCode", 0, 0, 1440, 300)
     txt.Name = "txt_UnitCode"
 
     Set txt = CreateControl(frm.Name, acTextBox, acDetail, "", "UnitName", 0, 0, 2880, 300)
     txt.Name = "txt_UnitName"
 
-    Dim chk As Control
     Set chk = CreateControl(frm.Name, acCheckBox, acDetail, "", "IsActive", 0, 0, 300, 300)
     chk.Name = "chk_IsActive"
 
@@ -365,15 +357,14 @@ End Sub
 ' =============================================================================
 
 Private Sub Build_frm_Employees()
-    Dim frm As Form
-    Dim txt As Control
-    Dim cbo As Control
-    Dim chk As Control
+    Dim frm    As Form
+    Dim txt    As Control
+    Dim cbo    As Control
 
     Set frm = CreateForm()
     With frm
         .RecordSource      = "Employees"
-        .DefaultView       = 1        ' Continuous Forms
+        .DefaultView       = 1
         .Caption           = "Employees"
         .AllowAdditions    = True
         .AllowEdits        = True
@@ -382,46 +373,35 @@ Private Sub Build_frm_Employees()
         .Width             = FORM_W
     End With
 
-    ' Row 0: Employee Number
     Set txt = AddLabeledTextBox(frm.Name, "EmployeeNumber", "Employee No.:", 0)
-
-    ' Row 1: Last Name
     Set txt = AddLabeledTextBox(frm.Name, "LastName", "Last Name:", 1)
-
-    ' Row 2: First Name
     Set txt = AddLabeledTextBox(frm.Name, "FirstName", "First Name:", 2)
-
-    ' Row 3: Email
     Set txt = AddLabeledTextBox(frm.Name, "EmailAddress", "Email:", 3)
 
-    ' Row 4: Unit (combo box)
     Set cbo = AddLabeledCombo(frm.Name, "UnitID", "Unit:", 4)
     With cbo
         .RowSourceType = "Table/Query"
         .RowSource     = "SELECT UnitID, UnitName FROM Units ORDER BY UnitName;"
         .ColumnCount   = 2
-        .ColumnWidths  = "0cm;4cm"
+        .ColumnWidths  = "0;2880"
         .BoundColumn   = 1
         .LimitToList   = True
     End With
 
-    ' Row 5: Supervisor (combo box -- self-referencing Employees table)
     Set cbo = AddLabeledCombo(frm.Name, "SupervisorEmployeeID", "Supervisor:", 5)
     With cbo
         .RowSourceType = "Table/Query"
-        .RowSource     = "SELECT EmployeeID, LastName & "", "" & FirstName " & _
-                         "FROM Employees ORDER BY LastName, FirstName;"
+        .RowSource     = "SELECT EmployeeID, LastName & ', ' & FirstName" & _
+                         " FROM Employees ORDER BY LastName, FirstName;"
         .ColumnCount   = 2
-        .ColumnWidths  = "0cm;4cm"
+        .ColumnWidths  = "0;2880"
         .BoundColumn   = 1
-        .LimitToList   = False   ' Allow blank (no supervisor)
+        .LimitToList   = False
     End With
 
-    ' Row 6: Hire Date
     Set txt = AddLabeledTextBox(frm.Name, "HireDate", "Hire Date:", 6)
     txt.Format = "Short Date"
 
-    ' Row 7: Is Active
     AddLabeledCheckBox frm.Name, "IsActive", "Active:", 7
 
     DoCmd.Close acForm, frm.Name, acSaveYes, "frm_Employees"
@@ -430,52 +410,70 @@ End Sub
 
 ' =============================================================================
 ' ADMIN SWITCHBOARD
-' Creates a navigation form with one button per maintenance form.
 ' =============================================================================
 
 Private Sub Build_frm_Admin()
-    Dim frm As Form
-    Dim lbl As Control
-    Dim btn As Control
-    Dim mdl As Module
-    Dim i As Integer
+    Dim frm      As Form
+    Dim lbl      As Control
+    Dim btn      As Control
+    Dim mdl      As Object
+    Dim code     As String
+    Dim btnTop   As Long
+    Dim i        As Integer
 
-    ' --- Button definitions: Caption, form to open ---
-    Dim captions(7)  As String
-    Dim targets(7)   As String
-    Dim btnNames(7)  As String
+    Dim captions(7) As String
+    Dim targets(7)  As String
+    Dim btnNames(7) As String
 
-    captions(0) = "Manage Units"                     : targets(0) = "frm_Units"             : btnNames(0) = "btnUnits"
-    captions(1) = "Manage Task Types"                : targets(1) = "frm_TaskTypes"          : btnNames(1) = "btnTaskTypes"
-    captions(2) = "Manage Certified Mail Types"      : targets(2) = "frm_CertMailTypes"      : btnNames(2) = "btnCertMailTypes"
-    captions(3) = "Manage Certified Mail Statuses"   : targets(3) = "frm_CertMailStatuses"   : btnNames(3) = "btnCertMailStatuses"
-    captions(4) = "Manage Review Statuses"           : targets(4) = "frm_ReviewStatuses"     : btnNames(4) = "btnReviewStatuses"
-    captions(5) = "Manage Backlog Statuses"          : targets(5) = "frm_BacklogStatuses"    : btnNames(5) = "btnBacklogStatuses"
-    captions(6) = "Manage Employees"                 : targets(6) = "frm_Employees"          : btnNames(6) = "btnEmployees"
-    captions(7) = "Close Admin Panel"               : targets(7) = ""                        : btnNames(7) = "btnClose"
+    captions(0) = "Manage Units"
+    targets(0)  = "frm_Units"
+    btnNames(0) = "btnUnits"
 
-    ' --- Create the form ---
+    captions(1) = "Manage Task Types"
+    targets(1)  = "frm_TaskTypes"
+    btnNames(1) = "btnTaskTypes"
+
+    captions(2) = "Manage Certified Mail Types"
+    targets(2)  = "frm_CertMailTypes"
+    btnNames(2) = "btnCertMailTypes"
+
+    captions(3) = "Manage Certified Mail Statuses"
+    targets(3)  = "frm_CertMailStatuses"
+    btnNames(3) = "btnCertMailStatuses"
+
+    captions(4) = "Manage Review Statuses"
+    targets(4)  = "frm_ReviewStatuses"
+    btnNames(4) = "btnReviewStatuses"
+
+    captions(5) = "Manage Backlog Statuses"
+    targets(5)  = "frm_BacklogStatuses"
+    btnNames(5) = "btnBacklogStatuses"
+
+    captions(6) = "Manage Employees"
+    targets(6)  = "frm_Employees"
+    btnNames(6) = "btnEmployees"
+
+    captions(7) = "Close Admin Panel"
+    targets(7)  = ""
+    btnNames(7) = "btnClose"
+
     Set frm = CreateForm()
     With frm
-        .Caption          = "OCSS Productivity - Admin"
-        .DefaultView      = 0          ' Single Form
-        .ScrollBars       = 0          ' Neither
-        .RecordSelectors  = False
+        .Caption           = "OCSS Productivity - Admin"
+        .DefaultView       = 0
+        .ScrollBars        = 0
+        .RecordSelectors   = False
         .NavigationButtons = False
-        .HasModule        = True       ' Enable VBA module for button events
-        .Width            = 5400       ' ~3.75 inches wide
+        .HasModule         = True
+        .Width             = 5400
     End With
 
-    ' --- Title label ---
-    Set lbl = CreateControl(frm.Name, acLabel, acDetail, "", "", _
-                            360, 240, 4680, 480)
-    lbl.Caption   = "OCSS Productivity Database - Admin"
-    lbl.FontSize  = 14
-    lbl.FontBold  = True
-    lbl.Name      = "lblTitle"
+    Set lbl = CreateControl(frm.Name, acLabel, acDetail, "", "", 360, 240, 4680, 480)
+    lbl.Caption  = "OCSS Productivity Database - Admin"
+    lbl.FontSize = 14
+    lbl.FontBold = True
+    lbl.Name     = "lblTitle"
 
-    ' --- One button per entry ---
-    Dim btnTop As Long
     btnTop = 1080
     For i = 0 To 7
         Set btn = CreateControl(frm.Name, acCommandButton, acDetail, "", "", _
@@ -486,34 +484,26 @@ Private Sub Build_frm_Admin()
         btnTop = btnTop + 600
     Next i
 
-    ' --- Resize the form detail section to fit all buttons ---
-    frm.Section(acDetail).Height = btnTop + 360
-
-    ' --- Write click-event procedures into the form module ---
     Set mdl = frm.Module
 
-    ' Remove the default stub Access may have added
     On Error Resume Next
-    mdl.DeleteLines 1, mdl.CountOfLines
+    If mdl.CountOfLines > 0 Then
+        mdl.DeleteLines 1, mdl.CountOfLines
+    End If
     On Error GoTo 0
 
-    Dim code As String
-    code = "Option Compare Database" & vbCrLf & _
-           "Option Explicit" & vbCrLf & vbCrLf
+    code = "Option Compare Database" & vbCrLf
+    code = code & "Option Explicit" & vbCrLf & vbCrLf
 
-    ' Generate one click sub per form-opening button
     For i = 0 To 6
-        code = code & _
-               "Private Sub " & btnNames(i) & "_Click()" & vbCrLf & _
-               "    DoCmd.OpenForm """ & targets(i) & """" & vbCrLf & _
-               "End Sub" & vbCrLf & vbCrLf
+        code = code & "Private Sub " & btnNames(i) & "_Click()" & vbCrLf
+        code = code & "    DoCmd.OpenForm """ & targets(i) & """" & vbCrLf
+        code = code & "End Sub" & vbCrLf & vbCrLf
     Next i
 
-    ' Close button
-    code = code & _
-           "Private Sub btnClose_Click()" & vbCrLf & _
-           "    DoCmd.Close acForm, Me.Name" & vbCrLf & _
-           "End Sub" & vbCrLf
+    code = code & "Private Sub btnClose_Click()" & vbCrLf
+    code = code & "    DoCmd.Close acForm, Me.Name" & vbCrLf
+    code = code & "End Sub" & vbCrLf
 
     mdl.AddFromString code
 
